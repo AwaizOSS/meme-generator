@@ -4,95 +4,152 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      .image-size {
+        width: 200px;
+      }
+    </style>
     <title>Meme Generator</title>
   </head>
-  <body class="bg-gray-500">
-    <h1 class="mt-8 text-white text-3xl font-bold text-center">
-      Meme Generator
-    </h1>
-    <div class="categories space-y-4 mt-10 p-8">
-      <div
-        id="good"
-        class="drop-zone bg-green-300 p-3 flex flex-row space-x-3 overflow-auto"
-      >
-        <h2 class="text-xl font-bold">good</h2>
-      </div>
-      <div
-        id="decent"
-        class="drop-zone bg-blue-300 p-3 flex flex-row space-x-3 overflow-auto"
-      >
-        <h2 class="text-xl font-bold">decent</h2>
-      </div>
-      <div
-        id="average"
-        class="drop-zone bg-yellow-300 p-3 flex flex-row space-x-3 overflow-auto"
-      >
-        <h2 class="text-xl font-bold">average</h2>
-      </div>
-      <div
-        id="trash"
-        class="drop-zone bg-red-300 p-3 flex flex-row space-x-3 overflow-auto"
-      >
-        <h2 class="text-xl font-bold">trash</h2>
-      </div>
-      <div
-        id="intolerable"
-        class="drop-zone bg-gray-300 p-3 flex flex-row space-x-3 overflow-auto"
-      >
-        <h2 class="text-xl font-bold">intolerable</h2>
-      </div>
+  <body class="bg-gray-500 p-5 mt-8 p-4">
+    <h1 class="text-white text-3xl font-bold text-center">Meme Generator</h1>
+    <!-- custom image upload -->
+    <div class="mb-5 p-4">
+      <h2 class="text-white text-2xl font-bold">Upload Images</h2>
+      <input
+        type="file"
+        id="imgInput"
+        accept="image/*"
+        multiple
+        class="block w-full text-lg text-slate-500 file:mr-4 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
+      />
     </div>
-    <div class="images mt-10 grid grid-cols-3 gap-4 m-8">
-      <img
-        src="https://picsum.photos/100?random=1"
-        id="image1"
-        alt="Image"
-        class="draggable"
-        draggable="true"
+    <div class="grid grid-cols-8 gap-4 mb-5" id="imgContainer">
+      <!-- uploaded images will be here -->
+    </div>
+
+    <!-- custom categories input-->
+    <div class="custom-category mb-5 p-4">
+      <h2 class="text-white text-2xl font-bold">Custom Categories</h2>
+      <input
+        type="text"
+        id="categoryName"
+        placeholder="please enter category name"
+        class="text-sm border rounded"
       />
-      <img
-        src="https://picsum.photos/100?random=2"
-        id="image2"
-        alt="Image 2"
-        class="draggable"
-        draggable="true"
-      />
-      <img
-        src="https://picsum.photos/100?random=3"
-        id="image3"
-        alt="Image 3"
-        class="draggable"
-        draggable="true"
-      />
-      <img
-        src="https://picsum.photos/100?random=4"
-        id="image4"
-        alt="Image 4"
-        class="draggable"
-        draggable="true"
-      />
+      <input type="color" id="categoryColor" class="p-2 border rounded" />
+      <button
+        id="addCategory"
+        class="bg-violet-500 text-white p-2 rounded mx-4 hover:bg-violet-400"
+      >
+        Add Category
+      </button>
+    </div>
+
+    <!-- custom categories output -->
+    <div class="categories space-y-3" id="categories">
+      <!-- added categories will be here -->
     </div>
 
     <script>
-      document.querySelectorAll(".draggable").forEach((item) => {
-        item.addEventListener("dragstart", (e) => {
-          e.dataTransfer.setData("text", e.target.id);
-          console.log("test", e.target.id);
+      // adding custom category
+      document.getElementById("addCategory").addEventListener("click", (e) => {
+        const categoryName = document
+          .getElementById("categoryName")
+          .value.trim();
+        const categoryColor = document.getElementById("categoryColor").value;
+
+        const categoryContainer = document.getElementById("categories");
+        const newCategory = document.createElement("div");
+        newCategory.classList.add(
+          "category",
+          "drop-zone",
+          "flex",
+          "p-3",
+          "flex-row",
+          "space-x-3",
+          "overflow-auto"
+        );
+        newCategory.style.backgroundColor = categoryColor;
+        newCategory.innerHTML = `<h2 class='font-bold text-xl'>${categoryName}</h2>`;
+        categoryContainer.appendChild(newCategory);
+
+        //gets triggered when draggable element enters its area
+        newCategory.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          newCategory.classList.add("bg-gray-400");
+        });
+
+        //gets triggered when draggable element leaves its area
+        newCategory.addEventListener("dragleave", (e) => {
+          e.preventDefault();
+          newCategory.classList.add("bg-gray-400");
+        });
+
+        //gets triggered when draggable element is dropped in its area
+        newCategory.addEventListener("drop", (event) => {
+          event.preventDefault();
+          newCategory.classList.remove("bg-gray-400");
+          const id = event.dataTransfer.getData("text");
+          const draggableElement = document.getElementById(id);
+          newCategory.appendChild(draggableElement);
         });
       });
+
+      // image upload
+      document.getElementById("imgInput").addEventListener("change", (e) => {
+        const imgContainer = document.getElementById("imgContainer");
+        const files = e.target.files;
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const reader = new FileReader();
+          reader.readAsDataURL(file); // a DataURL represents a file as a base64 encoded string.
+          reader.onerror = (e) => {
+            console.error("Error reading file:", e.target.error);
+          };
+
+          // an async function triggered when file reading is complete
+          reader.onload = (e) => {
+            const img = document.createElement("img");
+            img.src = e.target.result; // this result contains the DataURL generated from the file reading process
+            img.classList.add("draggable", "image-size");
+            img.alt = "uploaded img";
+            img.id = "uploadedimg" + i;
+            imgContainer.appendChild(img);
+
+            img.addEventListener("dragstart", (e) => {
+              e.dataTransfer.setData("text", e.target.id);
+            });
+          };
+        }
+      });
+
+      // attaching data for when image will be dragged
+      document.querySelectorAll(".draggable").forEach((item) => {
+        item.addEventListener("dragstart", (e) => {
+          e.dataTransfer.setData("text", e.target.id); // transfers data to where its being dragged
+        });
+      });
+
+      // handles the changing of color when image is brought to drop zone and its attaching
       document.querySelectorAll(".drop-zone").forEach((zone) => {
+        //gets triggered when draggable element enters its area
         zone.addEventListener("dragover", (event) => {
           event.preventDefault();
           zone.classList.add("bg-gray-400");
         });
+
+        //gets triggered when draggable element leaves its area
         zone.addEventListener("dragleave", (event) => {
           event.preventDefault();
           zone.classList.remove("bg-gray-400");
         });
+
+        //gets triggered when draggable element is dropped in its area
         zone.addEventListener("drop", (event) => {
           event.preventDefault();
           zone.classList.remove("bg-gray-400");
-          const id = event.dataTransfer.getData("text");
+          const id = event.dataTransfer.getData("text"); //recieves the data that was attached
           const draggableElement = document.getElementById(id);
           zone.appendChild(draggableElement);
         });
